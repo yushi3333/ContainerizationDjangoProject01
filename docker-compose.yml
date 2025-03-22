@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    container_name: socialbook_db
+    environment:
+      POSTGRES_USER: yushi
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: social_book_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    #image: a1125189291/social_book-web:latest
+    container_name: socialbook_web
+    command: gunicorn social_book.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - ./staticfiles:/app/staticfiles  # Map staticfiles directory
+      - ./media:/app/media  # Map static directory (if needed)
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DJANGO_SECRET_KEY: 'django-insecure-r03i21slub9@-s#ry9y@j1i9!&0ci0a$b_d2h%va8v*7a_*hp8'
+      DJANGO_DEBUG: 'True'
+      DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1,0.0.0.0'
+      SQL_HOST: socialbook_db
+      SQL_PORT: 5432
+      SQL_DATABASE: social_book_db
+      SQL_USER: yushi
+      SQL_PASSWORD: 1234
+
+volumes:
+  postgres_data:
+  staticfiles:
+  media_files:
+
+
