@@ -1,0 +1,102 @@
+yushi
+Gys0081234
+
+#create admin
+python manage.py createsuperuser
+
+#update
+python manage.py makemigrations
+python manage.py migrate
+
+#start
+python manage.py runserver
+
+#rm virtual environment
+
+rm -rf djangoenv
+
+#install virtual environment
+python3.11 -m venv djangoenv
+
+#activate the virtual environment
+source djangoenv/bin/activate
+
+#install library
+pip install Pillow
+pip install gunicorn
+pip install django
+pip install firebase-admin
+pip install whitenoise
+
+
+#update the requirement.txt
+pip freeze > requirements.txt
+
+RUN pip install -r requirements.txt
+
+
+<----------------------------------------Database--------------------------------------->
+#install the PostgreSQL and psycopg2:
+pip install psycopg2-binary
+
+
+#connect to PostgreSQL 17 version explicitly
+sudo /Library/PostgreSQL/17/bin/psql -U postgres
+
+#Create a new database
+CREATE DATABASE social_book_db;
+
+#Create a new user with a password
+CREATE USER yushi WITH PASSWORD 'gys008';
+
+#Grant the user access to the database:
+CREATE ROLE
+GRANT ALL PRIVILEGES ON DATABASE social_book_db TO yushi;
+
+-- Set schema ownership explicitly
+ALTER SCHEMA public OWNER TO yushi;
+
+-- Explicitly allow the user to create tables and other objects
+GRANT ALL ON SCHEMA public TO yushi;
+GRANT CREATE ON SCHEMA public TO yushi;
+
+-- Allow the user full permissions for future created tables/sequences
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO yushi;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO yushi;
+
+-- Just to ensure no permission issues persist
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO yushi;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO yushi;
+
+
+-----------------------build the docker image-------------
+docker build -t social_book_app .
+
+#Run Docker Container:
+docker run -d -p 8000:8000 social_book_app
+
+-----------------------Run PostgreSQL using Docker:---------------
+
+docker run -d \
+  --name socialbook_db \
+  -e POSTGRES_USER=yushi \
+  -e POSTGRES_PASSWORD=gys008 \
+  -e POSTGRES_DB=social_book_db \
+  -p 5433:5432 \
+  postgres:16
+  
+SECRET_KEY = "django-insecure-r03i21slub9@-s#ry9y@j1i9!&0ci0a$b_d2h%va8v*7a_*hp8"
+
+
+<-------------------------update django on docker---------------------->
+docker-compose exec web python manage.py makemigrations
+docker-compose exec web python manage.py migrate
+
+#Remove images
+# build images
+# start services
+
+docker compose down                                    
+docker compose up --build -d
+
+-------------------------push to docker repository-------------------------

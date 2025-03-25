@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from django.contrib.auth.models import User, auth
+from django.contrib.auth import login
 # send the messages
 from django.contrib import messages
 from .models import Profile, Post, LikePost, FollowersCount, Comment
@@ -8,7 +9,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from itertools import chain
 import random
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth 
 
+cred = credentials.Certificate('social_book/cloudfinal-33aec-firebase-adminsdk-fbsvc-11d04bed19.json')
+firebase_admin.initialize_app(cred)
 
 
 #need login in to be able to see the home page
@@ -108,20 +113,67 @@ def signup(request):
     
 def signin(request):
     if request.method == "POST":
-        username=request.POST['username']
-        password=request.POST['password']
-        user = auth.authenticate(username=username, password=password)
-        if user is not None:
-            auth.login(request, user)
-            return redirect('/')
+        if 'email' in request.POST:
+            email = request.POST['email']
+            try:
+               
+                user = firebase_auth.get_user_by_email(email)
+                if user:
+                    django_user, created = User.objects.get_or_create(
+                        username=user.uid,
+                        defaults={'email': email}
+                    )
+                    if created:
+                        Profile.objects.create(user=django_user, id_user=django_user.id)
+                    auth.login(request, django_user)
+                    return redirect('/')
+                else:
+                    messages.info(request, 'Invalid email or code')
+                    return redirect('signin')
+            except Exception as e:
+                messages.info(request, 'Login failed: ' + str(e))
+                return redirect('signin')
         else:
-            #user does not exist
-            messages.info(request, 'Credentials Invalid')
-            return redirect('signin')
-                  
+            username = request.POST['username']
+            password = request.POST['password']
+            user = auth.authenticate(username=username, password=password)
+            if user is not None:
+                auth.login(request, user)
+                return redirect('/')
+            else:
+                messages.info(request, 'Credentials Invalid')
+                return redirect('signin')
     else:
         return render(request, 'signin.html')
+    
+def handle_signin_link(request):
+    # 从 URL 参数中获取 oobCode 和 email
+    oob_code = request.GET.get('oobCode')
+    email = request.GET.get('email')
 
+    if not oob_code or not email:
+        return HttpResponse('Invalid request: missing oobCode or email', status=400)
+
+    try:
+        # 使用 Firebase Admin SDK 验证登录链接
+        user = firebase_auth.get_user_by_email(email)
+        if user:
+            # 创建或获取 Django 用户
+            django_user, created = User.objects.get_or_create(
+                username=user.uid,
+                defaults={'email': email}
+            )
+            if created:
+                # 为新用户创建个人资料
+                Profile.objects.create(user=django_user, id_user=django_user.id)
+            
+            # 登录用户
+            login(request, django_user)
+            return redirect('/')  # 重定向到主页
+        else:
+            return HttpResponse('User not found', status=404)
+    except Exception as e:
+        return HttpResponse(f'Error: {str(e)}', status=500)
 @login_required(login_url='signin')
 def logout(request):
     auth.logout(request)

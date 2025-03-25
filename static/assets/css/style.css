@@ -17,7 +17,9 @@ body{
 button {
   vertical-align: middle;
 }
-
+.changeword:hover{
+  color: #2b2b2b;
+}
 span.button, button.button {
   background-color: #be185d;
   top: 0;
