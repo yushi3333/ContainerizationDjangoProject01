@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-app
+  labels:
+    app: django
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: django
+  template:
+    metadata:
+      labels:
+        app: django
+    spec:
+      containers:
+      - name: django-container
+        image: us-central1-docker.pkg.dev/seventh-program-447803-i7/django-repo/django-app:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DJANGO_DEBUG
+          value: "True"
+        - name: DJANGO_SECRET_KEY
+          value: "django-insecure-default-key"
+        - name: DJANGO_ALLOWED_HOSTS
+          value: "django-app-998587075921.us-central1.run.app"
+        - name: DJANGO_CSRF_TRUSTED_ORIGINS
+          value: "https://django-app-998587075921.us-central1.run.app"
+        - name: SQL_DATABASE
+          value: "social_book_db"
+        - name: SQL_USER
+          value: "yushi"
+        - name: SQL_PASSWORD
+          value: "123456"
+        - name: SQL_HOST
+          value: "104.154.34.195"
+        - name: SQL_PORT
+          value: "5432"
+        volumeMounts:
+        - name: media-storage
+          mountPath: /app/media
+      volumes:
+      - name: media-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: django
+  ports:
+  - port: 80
+    targetPort: 8080

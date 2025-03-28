@@ -10,14 +10,15 @@ import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/9.
 
 
 const firebaseConfig = {
-    apiKey: "AIzaSyACcf2Gklwlk49JFYmyKsJCthcXuLJzj6E",
-    authDomain: "cloudfinal-33aec.firebaseapp.com",
-    projectId: "cloudfinal-33aec",
-    storageBucket: "cloudfinal-33aec.firebasestorage.app",
-    messagingSenderId: "993334870171",
-    appId: "1:993334870171:web:7afc72d4f01e608a88463e",
-    measurementId: "G-E2P5L7S5E4"
+    apiKey: "AIzaSyBZm2WeRuOiKE8kB2jDaUHaFKqwnl9aU3Y",
+    authDomain: "cloudfinalproject-d5e96.firebaseapp.com",
+    projectId: "cloudfinalproject-d5e96",
+    storageBucket: "cloudfinalproject-d5e96.firebasestorage.app",
+    messagingSenderId: "903257436088",
+    appId: "1:903257436088:web:3fb896cace49a9b988e94d",
+    measurementId: "G-R1HGPV1XTV"
   };
+  
 
 
 const app = initializeApp(firebaseConfig);

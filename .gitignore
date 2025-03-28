@@ -9,13 +9,15 @@ __pycache__/
 # SQLite
 db.sqlite3
 
-# Django static/media
-/media/
-/media_files/
-/staticfiles/
+
+
 
 # VS Code
 .vscode/
 
 # Docker
 *.log
+
+.cloudrun.env.yaml
+.env
+.DS_Store

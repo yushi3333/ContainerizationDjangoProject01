@@ -27,6 +27,14 @@ pip install gunicorn
 pip install django
 pip install firebase-admin
 pip install whitenoise
+pip install python-dotenv
+pip install django-storages google-cloud-storage
+
+
+-----------gcloud k8s----------------
+gcloud components install gke-gcloud-auth-plugin
+
+
 
 
 #update the requirement.txt
@@ -89,7 +97,8 @@ SECRET_KEY = "django-insecure-r03i21slub9@-s#ry9y@j1i9!&0ci0a$b_d2h%va8v*7a_*hp8
 
 
 <-------------------------update django on docker---------------------->
-docker-compose exec web python manage.py makemigrations
+docker-compose exec web python manage
+.py makemigrations
 docker-compose exec web python manage.py migrate
 
 #Remove images
@@ -99,4 +108,43 @@ docker-compose exec web python manage.py migrate
 docker compose down                                    
 docker compose up --build -d
 
--------------------------push to docker repository-------------------------
+-------------------------update and redeploy container on google cloud------------
+gcloud builds submit --tag us-central1-docker.pkg.dev/seventh-program-447803-i7/django-repo/django-app
+
+gcloud run deploy django-app \
+  --image us-central1-docker.pkg.dev/seventh-program-447803-i7/django-repo/django-app \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --env-vars-file .cloudrun.env.yaml \
+  --add-cloudsql-instances seventh-program-447803-i7:us-central1:socialbookdb
+
+
+
+------------------------------------------connect to db-------------------------------------
+export SQL_DATABASE=social_book_db
+export SQL_USER=yushi
+export SQL_PASSWORD=123456
+export SQL_HOST=104.154.34.195
+export SQL_PORT=5432
+python manage.py migrate
+
+------------------cluster set up---------------------
+gcloud container clusters create socialbook-cluster \
+  --num-nodes=3 \
+  --zone=us-central1-a \
+  --cluster-version=latest
+
+
+-------------Run this to configure access to  GKE cluster-----------
+gcloud container clusters get-credentials socialbook-cluster \
+  --region us-central1-a \
+  --project seventh-program-447803-i7
+
+---------------------install the GKE Auth Plugin in local cp -----
+brew install google-cloud-sdk
+
+
+
+---------------------upload deployment.yaml----------
+kubectl apply -f django-deployment.yaml

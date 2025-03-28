@@ -12,7 +12,7 @@ import random
 import firebase_admin
 from firebase_admin import credentials, auth as firebase_auth 
 
-cred = credentials.Certificate('social_book/cloudfinal-33aec-firebase-adminsdk-fbsvc-11d04bed19.json')
+cred = credentials.Certificate('social_book/cloudfinalproject-d5e96-firebase-adminsdk-fbsvc-87bdcad1d1.json')
 firebase_admin.initialize_app(cred)
 
 
@@ -115,23 +115,21 @@ def signin(request):
     if request.method == "POST":
         if 'email' in request.POST:
             email = request.POST['email']
+            actionCodeSettings = {
+                'url': 'https://django-app-998587075921.us-central1.run.app/',
+                'handleCodeInApp': True,
+            }
+
             try:
-               
-                user = firebase_auth.get_user_by_email(email)
-                if user:
-                    django_user, created = User.objects.get_or_create(
-                        username=user.uid,
-                        defaults={'email': email}
-                    )
-                    if created:
-                        Profile.objects.create(user=django_user, id_user=django_user.id)
-                    auth.login(request, django_user)
-                    return redirect('/')
-                else:
-                    messages.info(request, 'Invalid email or code')
-                    return redirect('signin')
+                # 发送登录链接到用户邮箱
+                link = firebase_auth.generate_sign_in_with_email_link(email, actionCodeSettings)
+                # TODO: 发送邮件功能 (使用 Django 的 send_mail 或其他服务)
+                print(f"登录链接: {link}")  # 输出到终端用于调试
+
+                messages.info(request, 'Login link sent to your email')
+                return redirect('signin')
             except Exception as e:
-                messages.info(request, 'Login failed: ' + str(e))
+                messages.info(request, f'Error sending login link: {str(e)}')
                 return redirect('signin')
         else:
             username = request.POST['username']
@@ -145,7 +143,7 @@ def signin(request):
                 return redirect('signin')
     else:
         return render(request, 'signin.html')
-    
+       
 def handle_signin_link(request):
     # 从 URL 参数中获取 oobCode 和 email
     oob_code = request.GET.get('oobCode')
@@ -174,6 +172,7 @@ def handle_signin_link(request):
             return HttpResponse('User not found', status=404)
     except Exception as e:
         return HttpResponse(f'Error: {str(e)}', status=500)
+    
 @login_required(login_url='signin')
 def logout(request):
     auth.logout(request)
